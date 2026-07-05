@@ -208,7 +208,7 @@ interview-trainer/
 
 <div align="center">
 
-**Built with ❤️ using IBM Granite & watsonx.ai**
+**Built using IBM Granite & watsonx.ai**
 
 [![IBM SkillsBuild](https://img.shields.io/badge/IBM-SkillsBuild%20AICTE%202026-0530AD?style=for-the-badge&logo=ibm&logoColor=white)](https://skillsbuild.org)
 
