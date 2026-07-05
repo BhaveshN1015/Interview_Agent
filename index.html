@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ARIA — AI Interview Trainer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f1a;
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      color: #4f9eff;
+    }
+    .header p {
+      color: #aaa;
+      margin-top: 8px;
+      font-size: 1rem;
+    }
+    .badge {
+      display: inline-block;
+      background: #1a2a4a;
+      color: #4f9eff;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    #root { width: 100%; height: 70vh; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎯 ARIA</h1>
+    <p>AI Readiness Interview Agent</p>
+    <span class="badge">Powered by IBM Granite via watsonx Orchestrate</span>
+  </div>
+
+  <div id="root"></div>
+
+  <script>
+  window.wxOConfiguration = {
+    orchestrationID: "c1d1e46909524f4fb3e5ad5836d6d08b_61db486d-5329-434e-93e4-ea7215e63b7b",
+    hostURL: "https://us-south.watson-orchestrate.cloud.ibm.com",
+    rootElementID: "root",
+    deploymentPlatform: "ibmcloud",
+    crn: "crn:v1:bluemix:public:watsonx-orchestrate:us-south:a/c1d1e46909524f4fb3e5ad5836d6d08b:61db486d-5329-434e-93e4-ea7215e63b7b::",
+    chatOptions: {
+        agentId: "f4b07834-94e6-4ec5-b42c-fe739f5e79b5", 
+        agentEnvironmentId: "7eaf99dc-0588-44b2-81fc-86d1a0667102",
+    }
+  };
+  setTimeout(function () {
+    const script = document.createElement('script');
+    script.src = `${window.wxOConfiguration.hostURL}/wxochat/wxoLoader.js?embed=true`;
+    script.addEventListener('load', function () {
+        wxoLoader.init();
+    });
+    document.head.appendChild(script);
+  }, 0);                     
+</script>
+
+</body>
+</html>

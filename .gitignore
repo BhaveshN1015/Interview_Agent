@@ -1,0 +1,47 @@
+# Virtual Environment
+ml/
+venv/
+env/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment Variables - NEVER push this
+.env
+.env.local
+.env.production
+
+# Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Misc
+*.zip
+*.tar.gz
