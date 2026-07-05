@@ -206,19 +206,6 @@ interview-trainer/
 
 ---
 
-## 📄 Resume Impact
-
-> Add this to your resume under Work Experience:
-
-**AI/ML Intern — IBM SkillsBuild (AICTE 2026)**
-
-- Developed **ARIA (AI Readiness Interview Agent)**, a conversational AI agent using **Meta Llama 3.3 70B** via **IBM watsonx.ai**, delivering adaptive multi-round mock interviews with real-time answer evaluation and confidence tracking
-- Engineered a **FastAPI** async backend with ARIA behavior prompt system, integrating IBM watsonx.ai REST API for structured interview generation across Technical, HR, and Situational rounds
-- Deployed ARIA as a production agent on **IBM watsonx Orchestrate** with RaAct reasoning, enabling autonomous multi-turn interview sessions with personalized 7-day study roadmap generation
-- Built an interactive **Streamlit** frontend with session state management, serving 10+ IT company interview profiles including TCS, Infosys, Wipro, Accenture, and Cognizant
-
----
-
 <div align="center">
 
 **Built with ❤️ using IBM Granite & watsonx.ai**
