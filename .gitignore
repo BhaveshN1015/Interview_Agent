@@ -8,12 +8,18 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Environment Variables - NEVER push this
+# Environment Variables — NEVER push these
 .env
 .env.local
 .env.production
 
-# Python
+# Credentials & sensitive files — NEVER push
+IBM  whatsonx project keys.txt
+IBM*.txt
+*keys*.txt
+*secret*.txt
+
+# Python build artifacts
 *.egg-info/
 dist/
 build/
@@ -34,6 +40,7 @@ desktop.ini
 # Logs
 *.log
 logs/
+logs_images/
 
 # Streamlit
 .streamlit/secrets.toml
@@ -41,6 +48,12 @@ logs/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
+
+# Large binary / media files
+*.mp4
+*.mov
+*.avi
+*.mkv
 
 # Misc
 *.zip
