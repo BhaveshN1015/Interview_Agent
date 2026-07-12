@@ -214,7 +214,7 @@ Click the mic button, speak clearly, then submit.
     st.markdown("""
 <p style='font-size:11px;color:#666;text-align:center'>
 IBM SkillsBuild AICTE Internship 2026<br>
-IBM Granite · watsonx.ai · FastAPI · Streamlit
+watsonx.ai · FastAPI · Streamlit
 </p>
 """, unsafe_allow_html=True)
 
