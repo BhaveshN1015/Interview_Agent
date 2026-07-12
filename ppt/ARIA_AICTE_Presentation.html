@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARIA — AICTE Project Submission 2026</title>
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: Arial, sans-serif;
+  background: #1a1a2e;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+/* ── Slide Container ── */
+.slide-deck { width: 100%; max-width: 960px; }
+
+.slide {
+  width: 100%; aspect-ratio: 16/9;
+  background: #fff;
+  border-radius: 6px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: none; /* hidden by default — shown via nav */
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+}
+.slide.active { display: flex; flex-direction: column; }
+
+/* Print — show all slides */
+@media print {
+  body { background: #fff; padding: 0; }
+  .nav-bar, .slide-counter { display: none !important; }
+  .slide { display: flex !important; flex-direction: column;
+           page-break-after: always; margin-bottom: 0;
+           border-radius: 0; box-shadow: none; }
+}
+
+/* ── IBM / AICTE Colour Palette ── */
+:root {
+  --ibm-blue:    #0530AD;
+  --ibm-dark:    #061727;
+  --ibm-mid:     #0f3460;
+  --ibm-light:   #4589ff;
+  --ibm-cyan:    #08bdba;
+  --ibm-green:   #24a148;
+  --ibm-red:     #da1e28;
+  --ibm-yellow:  #f1c21b;
+  --ibm-purple:  #8a3ffc;
+  --text-main:   #161616;
+  --text-muted:  #525252;
+  --surface:     #f4f4f4;
+  --border:      #e0e0e0;
+}
+
+/* ── HEADER BAR (IBM style) ── */
+.ibm-header {
+  background: var(--ibm-blue);
+  color: #fff;
+  padding: 10px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.ibm-header .logo { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+.ibm-header .prog { font-size: 11px; opacity: 0.85; text-align: right; line-height: 1.4; }
+
+/* ── FOOTER BAR ── */
+.ibm-footer {
+  background: var(--ibm-dark);
+  color: rgba(255,255,255,0.55);
+  font-size: 10px;
+  padding: 6px 28px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-shrink: 0; margin-top: auto;
+}
+
+/* ── SLIDE BODY ── */
+.slide-body {
+  flex: 1; padding: 22px 32px 16px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── TYPOGRAPHY ── */
+.slide-title {
+  font-size: 22px; font-weight: 700;
+  color: var(--ibm-blue);
+  border-left: 5px solid var(--ibm-cyan);
+  padding-left: 12px;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+.slide-subtitle {
+  font-size: 13px; color: var(--text-muted);
+  margin-bottom: 14px; margin-top: -10px;
+}
+p, li { font-size: 13px; color: var(--text-main); line-height: 1.55; }
+li { margin-bottom: 5px; }
+ul { padding-left: 18px; }
+strong { color: var(--ibm-blue); }
+
+/* ── COVER SLIDE ── */
+.cover-slide {
+  background: linear-gradient(135deg, var(--ibm-dark) 0%, var(--ibm-mid) 60%, #0a4a6e 100%);
+}
+.cover-slide .ibm-header { background: rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.12); }
+.cover-slide .slide-body { align-items: flex-start; justify-content: center; padding: 32px 48px; }
+.cover-title { font-size: 40px; font-weight: 700; color: #fff; line-height: 1.1; margin-bottom: 8px; }
+.cover-title span { color: var(--ibm-cyan); }
+.cover-sub { font-size: 18px; color: rgba(255,255,255,0.75); margin-bottom: 24px; }
+.cover-badge {
+  display: inline-block; background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; font-size: 12px; padding: 5px 14px; border-radius: 20px; margin-bottom: 6px;
+}
+.cover-ps { font-size: 13px; color: var(--ibm-cyan); margin-top: 12px; }
+.cover-slide .ibm-footer { background: rgba(0,0,0,0.3); }
+
+/* ── STUDENT DETAILS SLIDE ── */
+.detail-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.detail-table tr { border-bottom: 1px solid var(--border); }
+.detail-table tr:last-child { border-bottom: none; }
+.detail-table td { padding: 10px 12px; font-size: 13px; }
+.detail-table td:first-child { font-weight: 700; color: var(--ibm-blue); width: 32%; background: var(--surface); }
+.detail-table td:last-child { color: var(--text-main); }
+
+/* ── PHOTO PLACEHOLDER ── */
+.photo-box {
+  width: 100px; height: 120px;
+  border: 2px dashed var(--ibm-blue);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; font-size: 11px; color: var(--ibm-blue);
+  background: #f0f4ff; flex-shrink: 0; margin-left: 16px;
+}
+
+/* ── TWO COLUMN ── */
+.two-col { display: flex; gap: 18px; flex: 1; }
+.col { flex: 1; display: flex; flex-direction: column; }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface); border-radius: 6px;
+  border-left: 4px solid var(--ibm-blue);
+  padding: 12px 14px; margin-bottom: 10px;
+}
+.card.cyan  { border-left-color: var(--ibm-cyan); }
+.card.green { border-left-color: var(--ibm-green); }
+.card.purple{ border-left-color: var(--ibm-purple); }
+.card.red   { border-left-color: var(--ibm-red); }
+.card.yellow{ border-left-color: var(--ibm-yellow); }
+.card-title { font-size: 13px; font-weight: 700; color: var(--ibm-blue); margin-bottom: 5px; }
+.card.cyan  .card-title { color: #007d79; }
+.card.green .card-title { color: #198038; }
+.card.purple .card-title { color: #6929c4; }
+
+/* ── TAG / BADGE ── */
+.tag {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 10px; margin: 2px 2px 2px 0;
+}
+.tag-blue   { background: #d0e2ff; color: var(--ibm-blue); }
+.tag-cyan   { background: #d9fbfb; color: #007d79; }
+.tag-green  { background: #defbe6; color: #198038; }
+.tag-purple { background: #e8daff; color: #6929c4; }
+.tag-red    { background: #ffd7d9; color: #a2191f; }
+.tag-yellow { background: #fef1bc; color: #8c5e00; }
+
+/* ── ARCH DIAGRAM ── */
+.arch-flow {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; flex-wrap: nowrap; margin: 10px 0;
+}
+.arch-box {
+  background: var(--ibm-blue); color: #fff;
+  border-radius: 6px; padding: 10px 12px; text-align: center;
+  font-size: 11px; font-weight: 700; min-width: 90px; line-height: 1.3;
+}
+.arch-box.cyan   { background: #007d79; }
+.arch-box.dark   { background: var(--ibm-dark); }
+.arch-box.green  { background: #198038; }
+.arch-box.purple { background: #6929c4; }
+.arch-arrow { font-size: 18px; color: var(--ibm-blue); font-weight: 700; }
+
+/* ── TECH TABLE ── */
+.tech-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tech-table th {
+  background: var(--ibm-blue); color: #fff;
+  padding: 8px 12px; text-align: left; font-size: 12px;
+}
+.tech-table td { padding: 7px 12px; border-bottom: 1px solid var(--border); }
+.tech-table tr:nth-child(even) td { background: var(--surface); }
+.tech-table tr:last-child td { border-bottom: none; }
+
+/* ── FLOW STEPS ── */
+.flow-steps { display: flex; gap: 8px; flex-wrap: wrap; }
+.flow-step {
+  flex: 1; min-width: 100px;
+  background: linear-gradient(135deg, var(--ibm-blue), var(--ibm-light));
+  color: #fff; border-radius: 8px; padding: 10px 10px;
+  text-align: center; font-size: 11px;
+}
+.flow-step .step-num {
+  font-size: 22px; font-weight: 700; opacity: 0.4; line-height: 1;
+  margin-bottom: 4px;
+}
+.flow-step .step-label { font-weight: 700; font-size: 11px; margin-bottom: 3px; }
+.flow-step .step-desc  { font-size: 10px; opacity: 0.85; }
+
+/* ── SCORE BAR ── */
+.score-bar-wrap { margin-bottom: 10px; }
+.score-label { font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 3px; display: flex; justify-content: space-between; }
+.score-track { background: var(--border); border-radius: 20px; height: 12px; overflow: hidden; }
+.score-fill  { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--ibm-blue), var(--ibm-cyan)); }
+
+/* ── SCREENSHOT PLACEHOLDER ── */
+.screenshot-placeholder {
+  border: 2.5px dashed #a8c4f0;
+  border-radius: 8px;
+  background: #f0f4ff;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 12px;
+  color: var(--ibm-blue); gap: 6px;
+}
+.screenshot-placeholder .ph-icon { font-size: 28px; opacity: 0.5; }
+.screenshot-placeholder .ph-title { font-size: 11px; font-weight: 700; }
+.screenshot-placeholder .ph-hint  { font-size: 10px; color: var(--text-muted); }
+
+/* ── CONFIDENCE METER ── */
+.conf-row { display: flex; align-items: center; gap: 24px; justify-content: center; margin: 12px 0; }
+.conf-bubble {
+  text-align: center;
+  background: var(--surface); border-radius: 12px;
+  padding: 16px 24px; border: 2px solid var(--border); min-width: 130px;
+}
+.conf-bubble .cb-score { font-size: 42px; font-weight: 700; color: var(--ibm-blue); line-height: 1; }
+.conf-bubble .cb-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.conf-bubble.after { border-color: var(--ibm-green); }
+.conf-bubble.after .cb-score { color: var(--ibm-green); }
+.conf-arrow { font-size: 32px; color: var(--ibm-cyan); font-weight: 700; }
+.conf-delta {
+  background: #defbe6; color: #198038;
+  border-radius: 50%; width: 52px; height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700;
+}
+
+/* ── TOKEN COMPARE ── */
+.token-row { display: flex; gap: 14px; margin-bottom: 8px; }
+.token-cell {
+  flex: 1; border-radius: 6px; padding: 10px 12px; text-align: center;
+}
+.token-cell.before { background: #ffd7d9; border: 1px solid #ff8389; }
+.token-cell.after  { background: #defbe6; border: 1px solid #42be65; }
+.token-cell .tc-num { font-size: 26px; font-weight: 700; }
+.token-cell.before .tc-num { color: #a2191f; }
+.token-cell.after  .tc-num { color: #198038; }
+.token-cell .tc-lbl { font-size: 11px; color: var(--text-muted); }
+
+/* ── RESULT METRICS ── */
+.metrics-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.metric-card {
+  flex: 1; min-width: 100px; text-align: center;
+  background: linear-gradient(135deg, var(--ibm-blue), var(--ibm-mid));
+  border-radius: 8px; padding: 12px 10px; color: #fff;
+}
+.metric-card .mc-val { font-size: 28px; font-weight: 700; line-height: 1; }
+.metric-card .mc-lbl { font-size: 10px; opacity: 0.8; margin-top: 4px; }
+
+/* ── NAVIGATION ── */
+.nav-bar {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: rgba(5,48,173,0.95); border-radius: 40px;
+  padding: 10px 24px; display: flex; gap: 12px; align-items: center;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4); z-index: 100;
+}
+.nav-btn {
+  background: rgba(255,255,255,0.15); color: #fff;
+  border: 1px solid rgba(255,255,255,0.3); border-radius: 20px;
+  padding: 6px 18px; font-size: 13px; cursor: pointer;
+  transition: background 0.2s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.3); }
+.slide-counter { color: rgba(255,255,255,0.7); font-size: 12px; min-width: 60px; text-align: center; }
+.print-btn {
+  background: var(--ibm-cyan); color: #000;
+  border: none; border-radius: 20px;
+  padding: 6px 16px; font-size: 12px; cursor: pointer; font-weight: 700;
+}
+</style>
+</head>
+<body>
+
+<div class="slide-deck" id="deck">
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 1 — COVER
+════════════════════════════════════════════════════════ -->
+<div class="slide cover-slide active" id="s1">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">IBM University Engagement<br>Edunet Foundation · AICTE 2026</div>
+  </div>
+  <div class="slide-body">
+    <div class="cover-title"><span>ARIA</span></div>
+    <div style="font-size:20px;color:rgba(255,255,255,0.85);font-weight:600;margin-bottom:6px;">AI Readiness Interview Agent</div>
+    <div style="font-size:14px;color:rgba(255,255,255,0.55);margin-bottom:22px;">Your Personal AI-Powered Mock Interview Coach</div>
+    <div><span class="cover-badge">IBM SkillsBuild AICTE Internship 2026</span></div>
+    <div><span class="cover-badge">Problem Statement #22 — Interview Trainer Agent</span></div>
+    <div class="cover-ps" style="margin-top:18px;">Powered by Meta Llama 3.3 70B · IBM watsonx.ai · FastAPI · Streamlit</div>
+    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span class="tag tag-cyan">FastAPI</span>
+      <span class="tag tag-blue">IBM watsonx.ai</span>
+      <span class="tag tag-purple">Streamlit</span>
+      <span class="tag tag-green">Meta Llama 3.3 70B</span>
+      <span class="tag tag-yellow">Voice Input</span>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026 · Problem Statement #22</span>
+    <span>Slide 1</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 2 — STUDENT DETAILS
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Project Submission · Student Details</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Student Details</div>
+    <div style="display:flex;gap:20px;flex:1;">
+      <div style="flex:1;">
+        <table class="detail-table">
+          <tr><td>Student Name</td><td><strong>B10_15 Nayak</strong></td></tr>
+          <tr><td>Program</td><td>IBM SkillsBuild AICTE Internship 2026</td></tr>
+          <tr><td>Problem Statement</td><td>#22 — Interview Trainer Agent</td></tr>
+          <tr><td>Project Name</td><td><strong>ARIA — AI Readiness Interview Agent</strong></td></tr>
+          <tr><td>Mentor / Guide</td><td>IBM SkillsBuild Program</td></tr>
+          <tr><td>Institution</td><td>Edunet Foundation — IBM University Engagement</td></tr>
+          <tr><td>Domain</td><td>Education / Career Development / Agentic AI</td></tr>
+          <tr><td>Email ID</td><td><em style="color:#888">[ Add your email here ]</em></td></tr>
+          <tr><td>Mobile / WhatsApp</td><td><em style="color:#888">[ Add your number here ]</em></td></tr>
+          <tr><td>GitHub Repository</td><td><em style="color:#888">[ Add your GitHub URL here ]</em></td></tr>
+        </table>
+      </div>
+      <div class="photo-box">
+        📷<br><br>Paste Your<br>Passport Photo<br>Here
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 2</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 3 — PROBLEM STATEMENT
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Problem Statement #22 — Interview Trainer Agent</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Problem Statement</div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card red">
+          <div class="card-title" style="color:#a2191f;">The Challenge</div>
+          <p>Every year, thousands of students and freshers <strong>fail job interviews</strong> — not due to lack of knowledge, but due to <strong>lack of structured preparation</strong>.</p>
+        </div>
+        <div class="card red" style="border-left-color:#ff8389;">
+          <div class="card-title" style="color:#a2191f;">What's Missing Today</div>
+          <ul>
+            <li>Generic YouTube videos & static PDFs don't adapt to individual skill sets</li>
+            <li>No role-specific or company-specific question generation</li>
+            <li>No real-time answer evaluation with scoring</li>
+            <li>No confidence tracking or personalised study roadmap</li>
+          </ul>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-title">The Objective</div>
+          <p>Build an AI-powered conversational Interview Trainer Agent that:</p>
+          <ul style="margin-top:6px;">
+            <li>Conducts structured mock interviews tailored to <strong>role, company & experience</strong></li>
+            <li>Evaluates answers in <strong>real-time</strong> with score + feedback</li>
+            <li>Tracks <strong>confidence growth</strong> from start to end</li>
+            <li>Generates a <strong>7-day personalised study roadmap</strong></li>
+            <li>Runs across all major IT companies: TCS, Infosys, Wipro, Accenture, Cognizant</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 3</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 4 — PROPOSED SOLUTION
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Proposed Solution</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Our Solution — ARIA</div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card cyan">
+          <div class="card-title">🎯 Personalised Mock Interviews</div>
+          <p>Tailored questions based on role, experience level, skills, and target company (TCS, Infosys, Wipro, Accenture, Cognizant)</p>
+        </div>
+        <div class="card green">
+          <div class="card-title">📊 Real-Time Answer Evaluation</div>
+          <p>Scores each answer out of 10, highlights strengths, identifies missing concepts, and shows the ideal answer in 1 line</p>
+        </div>
+        <div class="card purple">
+          <div class="card-title">🎙️ Voice Input</div>
+          <p>Speak your answers using the browser's built-in Speech Recognition — no external API or extra cost</p>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card yellow" style="border-left-color:#f1c21b;">
+          <div class="card-title" style="color:#8c5e00;">💡 Confidence Tracking</div>
+          <p>Unique feature — measures confidence score (1-10) at start and end of interview, showing your growth in real time</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🗺️ 7-Day Study Roadmap</div>
+          <p>Generates a personalised study plan based on weak areas identified during the interview session</p>
+        </div>
+        <div class="card cyan">
+          <div class="card-title">📋 Final Report Card</div>
+          <p>Technical / Communication / Confidence / Problem Solving scores + Top 3 Strengths + Top 3 Improvement Areas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 4</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 5 — IBM SERVICES USED
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">IBM Services &amp; Technologies Used</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">IBM Services &amp; Technologies Used</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;flex:1;">
+      <div class="card" style="flex:1;min-width:180px;">
+        <div class="card-title">🧠 IBM watsonx.ai</div>
+        <p>Foundation model platform hosting <strong>Meta Llama 3.3 70B</strong> for LLM inference. Provides REST API, token tracking, and project management.</p>
+        <div style="margin-top:6px;"><span class="tag tag-blue">Lite Tier (Free)</span><span class="tag tag-blue">Dallas Region</span></div>
+      </div>
+      <div class="card cyan" style="flex:1;min-width:180px;">
+        <div class="card-title">☁️ IBM Cloud Lite</div>
+        <p>Free cloud infrastructure hosting all IBM services — no credit card required. Provides IAM security and API key management.</p>
+        <div style="margin-top:6px;"><span class="tag tag-cyan">Free Tier</span><span class="tag tag-cyan">IBM IAM</span></div>
+      </div>
+      <div class="card purple" style="flex:1;min-width:180px;">
+        <div class="card-title">🤖 IBM Bob (AI Engineer)</div>
+        <p>IBM's AI Software Engineer used as the primary development assistant — architected the full codebase, token optimisation, voice feature, and deployment.</p>
+        <div style="margin-top:6px;"><span class="tag tag-purple">AI-Assisted Dev</span></div>
+      </div>
+      <div class="card green" style="flex:1;min-width:180px;">
+        <div class="card-title">📦 ibm-watsonx-ai SDK</div>
+        <p>Official IBM Python SDK used for <strong>ModelInference</strong> — handles model calls, credentials, chat API, and response parsing.</p>
+        <div style="margin-top:6px;"><span class="tag tag-green">v1.3.42</span><span class="tag tag-green">Python 3.10+</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 5</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 6 — COMPLETE TECH STACK
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Complete Tech Stack</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Complete Tech Stack</div>
+    <table class="tech-table">
+      <thead>
+        <tr><th>Layer</th><th>Technology</th><th>Version / Details</th><th>Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>LLM / AI Brain</strong></td><td>Meta Llama 3.3 70B Instruct</td><td>via IBM watsonx.ai</td><td>Interview question generation, answer scoring, report card</td></tr>
+        <tr><td><strong>LLM Platform</strong></td><td>IBM watsonx.ai</td><td>Lite Tier · Dallas</td><td>Model hosting, API access, token usage tracking</td></tr>
+        <tr><td><strong>Backend API</strong></td><td>FastAPI + Uvicorn</td><td>v0.115 · v0.30</td><td>REST API, server-side sessions, prompt engine</td></tr>
+        <tr><td><strong>Frontend UI</strong></td><td>Streamlit</td><td>v1.40.0</td><td>Chat interface, voice input widget, sidebar controls</td></tr>
+        <tr><td><strong>Voice Input</strong></td><td>Browser Web Speech API</td><td>Chrome / Edge native</td><td>Microphone-to-text, zero external dependencies</td></tr>
+        <tr><td><strong>IBM SDK</strong></td><td>ibm-watsonx-ai</td><td>v1.3.42</td><td>Official Python SDK for watsonx.ai model calls</td></tr>
+        <tr><td><strong>Language</strong></td><td>Python</td><td>3.10+</td><td>Core development language</td></tr>
+        <tr><td><strong>Version Control</strong></td><td>GitHub</td><td>—</td><td>Source code, README, deployment config</td></tr>
+        <tr><td><strong>AI Dev Assistant</strong></td><td>IBM Bob</td><td>—</td><td>Architecture, code optimisation, voice feature, deployment</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 6</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 7 — SYSTEM ARCHITECTURE
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">System Architecture &amp; Workflow</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">System Architecture &amp; Workflow</div>
+    <div class="arch-flow" style="margin-bottom:14px;">
+      <div class="arch-box" style="background:#444;">👤<br>User<br><small>(Chrome/Edge)</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box purple">🖥️<br>Streamlit<br>Frontend<br><small>:8501</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box">⚙️<br>FastAPI<br>Backend<br><small>:8000</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box cyan">🧠<br>ibm-watsonx<br>-ai SDK</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box green">🤖<br>Meta Llama<br>3.3 70B<br><small>watsonx.ai</small></div>
+    </div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card cyan" style="margin-bottom:8px;">
+          <div class="card-title">Key Design: Server-Side Sessions</div>
+          <p>Frontend sends <strong>only session_id + message</strong> — no history in HTTP body. Backend holds all history, trims to a rolling window, sends fixed-size context to LLM. Token cost stays flat regardless of interview length.</p>
+        </div>
+      </div>
+      <div class="col">
+        <div style="font-size:12px;color:var(--text-main);">
+          <div style="font-weight:700;color:var(--ibm-blue);margin-bottom:6px;">Request Flow</div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;gap:8px;align-items:flex-start;"><span style="background:var(--ibm-blue);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">1</span><span>User clicks <strong>Start</strong> → Streamlit calls <code>/session/new</code> → gets UUID</span></div>
+            <div style="display:flex;gap:8px;align-items:flex-start;"><span style="background:var(--ibm-blue);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">2</span><span>Each message → <code>POST /chat</code> with <code>{session_id, message}</code></span></div>
+            <div style="display:flex;gap:8px;align-items:flex-start;"><span style="background:var(--ibm-blue);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">3</span><span>FastAPI retrieves session history, builds trimmed LLM message list</span></div>
+            <div style="display:flex;gap:8px;align-items:flex-start;"><span style="background:var(--ibm-blue);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">4</span><span>LLM responds → sanitized → appended to session → returned to UI</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 7</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 8 — INTERVIEW FLOW
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">ARIA Interview Flow</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">ARIA Interview Flow</div>
+    <div class="flow-steps" style="margin-bottom:14px;">
+      <div class="flow-step" style="background:linear-gradient(135deg,#393939,#525252);">
+        <div class="step-num">1</div>
+        <div class="step-label">Onboarding</div>
+        <div class="step-desc">Name · Role · Experience · Skills · Target Company</div>
+      </div>
+      <div class="flow-step" style="background:linear-gradient(135deg,#6929c4,#8a3ffc);">
+        <div class="step-num">2</div>
+        <div class="step-label">Confidence Check</div>
+        <div class="step-desc">Rate confidence 1–10 before starting</div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-label">Technical Round</div>
+        <div class="step-desc">5 questions · Easy → Hard · Scored</div>
+      </div>
+      <div class="flow-step" style="background:linear-gradient(135deg,#007d79,#08bdba);">
+        <div class="step-num">4</div>
+        <div class="step-label">HR Round</div>
+        <div class="step-desc">3 behavioral questions · STAR format</div>
+      </div>
+      <div class="flow-step" style="background:linear-gradient(135deg,#b45309,#d97706);">
+        <div class="step-num">5</div>
+        <div class="step-label">Situational Round</div>
+        <div class="step-desc">2 real workplace scenarios · Problem solving</div>
+      </div>
+      <div class="flow-step" style="background:linear-gradient(135deg,#198038,#24a148);">
+        <div class="step-num">6</div>
+        <div class="step-label">Final Report Card</div>
+        <div class="step-desc">Score · Strengths · Roadmap · Motivation</div>
+      </div>
+    </div>
+    <div class="card cyan">
+      <div class="card-title">After Each Answer — Eval Format</div>
+      <div style="font-family:monospace;font-size:12px;background:#0f0f1a;color:#c9d1d9;padding:10px 14px;border-radius:4px;margin-top:6px;">
+        Score: 8/10<br>
+        Good: clear distinction with examples | Gap: missing algorithm names | Ideal: supervised=labeled(classification), unsupervised=unlabeled(clustering)<br><br>
+        Next Question: How does regularization prevent overfitting in ML models?
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 8</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 9 — UNIQUE INNOVATION: CONFIDENCE TRACKING
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Unique Innovation</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Unique Innovation — Confidence Tracking</div>
+    <p style="margin-bottom:12px;">ARIA measures your confidence <strong>BEFORE and AFTER</strong> the interview — tracking your growth in real-time. <em>No other interview trainer does this.</em></p>
+    <div class="conf-row">
+      <div class="conf-bubble">
+        <div class="cb-score">6/10</div>
+        <div class="cb-label">Before Interview<br><em style="font-size:10px;">"I'm nervous and unsure"</em></div>
+      </div>
+      <div class="conf-arrow">→</div>
+      <div class="conf-delta">+2</div>
+      <div class="conf-arrow">→</div>
+      <div class="conf-bubble after">
+        <div class="cb-score">8/10</div>
+        <div class="cb-label">After Interview<br><em style="font-size:10px;">"I feel ready and prepared!"</em></div>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:12px;">
+      <div class="card cyan col">
+        <div class="card-title">Why It Matters</div>
+        <ul>
+          <li>Shows tangible improvement within a single session</li>
+          <li>Motivates candidates to continue preparing</li>
+          <li>Included in the Final Report Card as a key metric</li>
+          <li>Differentiates ARIA from all other interview prep tools</li>
+        </ul>
+      </div>
+      <div class="card col">
+        <div class="card-title">How It Works</div>
+        <ul>
+          <li>ARIA asks confidence rating (1-10) during onboarding</li>
+          <li>Stored as "Start Confidence" — never scored/evaluated</li>
+          <li>At the end, the Final Report Card shows Start → End delta</li>
+          <li>Adaptive difficulty ensures confidence actually grows</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 9</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 10 — SCREENSHOTS (PLACEHOLDERS)
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s10">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Project Screenshots</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Project Screenshots</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;">
+      <div class="screenshot-placeholder" style="flex:1;">
+        <div class="ph-icon">🖼️</div>
+        <div class="ph-title">ARIA Streamlit UI — Home Screen</div>
+        <div class="ph-hint">[ Add screenshot of the landing page / Start Interview screen ]</div>
+      </div>
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">💬</div>
+        <div class="ph-title">ARIA Chat — Interview in Progress</div>
+        <div class="ph-hint">[ Add screenshot showing Score: X/10 feedback + Next Question ]</div>
+      </div>
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">🎙️</div>
+        <div class="ph-title">Voice Input Feature</div>
+        <div class="ph-hint">[ Add screenshot of the voice widget with mic button active ]</div>
+      </div>
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">📊</div>
+        <div class="ph-title">IBM watsonx.ai — Token Usage Dashboard</div>
+        <div class="ph-hint">[ Add screenshot of watsonx.ai project showing reduced token count ]</div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 10</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 11 — SCREENSHOTS 2 (PLACEHOLDERS)
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s11">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Project Screenshots — Report Card &amp; Architecture</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Project Screenshots (cont.)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;">
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">📋</div>
+        <div class="ph-title">ARIA — Final Report Card Output</div>
+        <div class="ph-hint">[ Add screenshot of the full report card with scores and roadmap ]</div>
+      </div>
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">🏁</div>
+        <div class="ph-title">ARIA — Confidence Growth Display</div>
+        <div class="ph-hint">[ Add screenshot showing Start Confidence → End Confidence in report ]</div>
+      </div>
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">🔧</div>
+        <div class="ph-title">FastAPI Backend — /docs Swagger UI</div>
+        <div class="ph-hint">[ Add screenshot of FastAPI interactive docs showing /session/new and /chat endpoints ]</div>
+      </div>
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">📁</div>
+        <div class="ph-title">GitHub Repository</div>
+        <div class="ph-hint">[ Add screenshot of the GitHub repo showing README with GIF demos ]</div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 11</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 12 — TOKEN OPTIMISATION
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s12">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Token Usage &amp; Optimisation</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Token Usage &amp; Optimisation</div>
+    <div class="two-col">
+      <div class="col">
+        <div class="token-row">
+          <div class="token-cell before"><div class="tc-num">~1,400</div><div class="tc-lbl">tokens/call · BEFORE</div></div>
+          <div class="token-cell after"><div class="tc-num">~505</div><div class="tc-lbl">tokens/call · AFTER</div></div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-label"><span>System Prompt Size</span><span>650 → 200 tok</span></div>
+          <div class="score-track"><div class="score-fill" style="width:85%"></div></div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-label"><span>History Payload</span><span>Unbounded → Fixed window</span></div>
+          <div class="score-track"><div class="score-fill" style="width:90%;background:linear-gradient(90deg,#6929c4,#8a3ffc)"></div></div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-label"><span>Output Cap</span><span>280 fixed → 50/180/400 dynamic</span></div>
+          <div class="score-track"><div class="score-fill" style="width:75%;background:linear-gradient(90deg,#007d79,#08bdba)"></div></div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-label"><span>Full Session Cost</span><span>~18,000 → ~6,500 tokens</span></div>
+          <div class="score-track"><div class="score-fill" style="width:64%;background:linear-gradient(90deg,#198038,#24a148)"></div></div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card cyan">
+          <div class="card-title">Key Optimisations Applied</div>
+          <ul>
+            <li><strong>Server-side sessions</strong> — history never sent from browser</li>
+            <li><strong>Compressed system prompt</strong> — 650 → 200 tokens</li>
+            <li><strong>Word-count truncation</strong> — accurate token proxy</li>
+            <li><strong>Dynamic output cap</strong> — 50 / 180 / 400 per phase</li>
+            <li><strong>Background model warmup</strong> — no cold-start lag</li>
+            <li><strong>Model singleton</strong> — created once, reused per request</li>
+          </ul>
+        </div>
+        <div class="card green" style="margin-top:8px;">
+          <div class="card-title">Free Tier Impact</div>
+          <p>Sessions per month: <strong>~2–3 before</strong> → <strong>~7–8 after</strong><br>IBM watsonx.ai Lite: 50,000 tokens/month</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 12</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 13 — FINAL REPORT CARD DEMO
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s13">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">ARIA Final Report Card Output</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">ARIA Final Report Card Output</div>
+    <div class="two-col">
+      <div class="col">
+        <div style="font-size:12px;font-weight:700;color:var(--ibm-blue);margin-bottom:8px;">Performance Scores</div>
+        <div class="score-bar-wrap">
+          <div class="score-label"><span>Technical</span><span>8.2/10</span></div>
+          <div class="score-track"><div class="score-fill" style="width:82%"></div></div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-label"><span>Communication</span><span>7.8/10</span></div>
+          <div class="score-track"><div class="score-fill" style="width:78%;background:linear-gradient(90deg,#6929c4,#8a3ffc)"></div></div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-label"><span>Confidence Growth</span><span>6 → 8 (+2)</span></div>
+          <div class="score-track"><div class="score-fill" style="width:80%;background:linear-gradient(90deg,#007d79,#08bdba)"></div></div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-label"><span>Problem Solving</span><span>7.5/10</span></div>
+          <div class="score-track"><div class="score-fill" style="width:75%;background:linear-gradient(90deg,#b45309,#d97706)"></div></div>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-label"><span>Overall Score</span><span>7.9/10</span></div>
+          <div class="score-track"><div class="score-fill" style="width:79%;background:linear-gradient(90deg,#198038,#24a148)"></div></div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card green" style="margin-bottom:8px;">
+          <div class="card-title">7-Day Personalised Study Roadmap</div>
+          <div style="font-size:11px;line-height:1.7;">
+            <div>📅 <strong>Day 1–2:</strong> Python OOP &amp; Decorators</div>
+            <div>📅 <strong>Day 3–4:</strong> DSA — Trees &amp; Graphs</div>
+            <div>📅 <strong>Day 5–6:</strong> SQL Joins &amp; Indexing</div>
+            <div>📅 <strong>Day 7:</strong> Full Mock Interview Practice</div>
+          </div>
+        </div>
+        <div class="card cyan">
+          <div class="card-title">Top 3 Strengths</div>
+          <p style="font-size:11px;">✅ Clear conceptual explanations with real-world examples<br>✅ Strong Python fundamentals<br>✅ Good confidence growth during the session</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 13</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 14 — PROJECT STRUCTURE & GITHUB
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s14">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Project Structure &amp; GitHub</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Project Structure &amp; GitHub</div>
+    <div class="two-col">
+      <div class="col">
+        <div style="font-family:monospace;font-size:11.5px;background:#0f0f1a;color:#c9d1d9;padding:14px 16px;border-radius:6px;line-height:1.9;">
+          interview-trainer/<br>
+          ├── <span style="color:#79c0ff">main.py</span>          <span style="color:#8b949e"># FastAPI backend · ARIA agent · sessions</span><br>
+          ├── <span style="color:#79c0ff">app.py</span>           <span style="color:#8b949e"># Streamlit UI · voice widget</span><br>
+          ├── <span style="color:#56d364">watsonx_client.py</span> <span style="color:#8b949e"># IBM SDK smoke-test helper</span><br>
+          ├── <span style="color:#56d364">prompt_templates.py</span><span style="color:#8b949e"># Prompt builders</span><br>
+          ├── <span style="color:#56d364">sample_prompts.py</span> <span style="color:#8b949e"># 5 company test scripts</span><br>
+          ├── <span style="color:#ffa657">requirements.txt</span>  <span style="color:#8b949e"># Pinned dependencies</span><br>
+          ├── <span style="color:#ffa657">Procfile</span>          <span style="color:#8b949e"># Render/Railway deployment</span><br>
+          ├── <span style="color:#f78166">.env.example</span>      <span style="color:#8b949e"># Credentials template</span><br>
+          ├── <span style="color:#f78166">.gitignore</span>        <span style="color:#8b949e"># Excludes .env · ml/ · videos</span><br>
+          ├── <span style="color:#e3b341">good_interview.gif</span> <span style="color:#8b949e"># Demo GIF — good answers</span><br>
+          ├── <span style="color:#e3b341">bad_interview.gif</span>  <span style="color:#8b949e"># Demo GIF — feedback shown</span><br>
+          └── <span style="color:#e3b341">README.md</span>         <span style="color:#8b949e"># Full documentation + badges</span>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card green">
+          <div class="card-title">GitHub Repository</div>
+          <p style="font-size:12px;margin-bottom:6px;font-style:italic;color:#888;">[ Add your GitHub URL here ]</p>
+          <div style="font-size:12px;line-height:1.8;">
+            ✅ Full source code — all files<br>
+            ✅ Professional README with GIF demos<br>
+            ✅ Deployment instructions (Render + Streamlit Cloud)<br>
+            ✅ Sample prompts for 5 companies<br>
+            ✅ .gitignore — secrets &amp; venv protected<br>
+            ✅ .env.example — safe credentials template
+          </div>
+        </div>
+        <div class="card" style="margin-top:8px;">
+          <div class="card-title">Deployment</div>
+          <p style="font-size:12px;">Backend → <strong>Render</strong> (free)<br>Frontend → <strong>Streamlit Community Cloud</strong> (free)<br>API_URL injected via Streamlit Secrets</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 14</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 15 — RESULTS & EVALUATION
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s15">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Results &amp; Evaluation</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Results &amp; Evaluation</div>
+    <div class="metrics-row" style="margin-bottom:16px;">
+      <div class="metric-card"><div class="mc-val">100%</div><div class="mc-lbl">Task Success Rate</div></div>
+      <div class="metric-card" style="background:linear-gradient(135deg,#007d79,#0e7c7c);"><div class="mc-val">100%</div><div class="mc-lbl">Journey Completion</div></div>
+      <div class="metric-card" style="background:linear-gradient(135deg,#6929c4,#8a3ffc);"><div class="mc-val">100%</div><div class="mc-lbl">Semantic Match</div></div>
+      <div class="metric-card" style="background:linear-gradient(135deg,#b45309,#d97706);"><div class="mc-val">100%</div><div class="mc-lbl">Routing Accuracy</div></div>
+      <div class="metric-card" style="background:linear-gradient(135deg,#198038,#24a148);"><div class="mc-val">4.04s</div><div class="mc-lbl">Avg Response Time</div></div>
+      <div class="metric-card" style="background:linear-gradient(135deg,#a2191f,#da1e28);"><div class="mc-val">64%</div><div class="mc-lbl">Token Cost Reduction</div></div>
+    </div>
+    <div class="two-col">
+      <div class="card cyan col">
+        <div class="card-title">What Works Well</div>
+        <ul>
+          <li>ARIA correctly flows through all 3 interview rounds without hallucinating extra turns</li>
+          <li>Confidence scoring bug fully resolved — no fake scores on onboarding turns</li>
+          <li>Voice input works seamlessly in Chrome/Edge with live transcript preview</li>
+          <li>Token cost remains flat as interview progresses (server-side sessions)</li>
+        </ul>
+      </div>
+      <div class="card col">
+        <div class="card-title">Challenges Overcome</div>
+        <ul>
+          <li>LLM hallucinating extra turns → fixed with structured role-based messages</li>
+          <li>Token spikes from full history resent each call → fixed with server-side sessions</li>
+          <li>Model scoring confidence number as interview answer → fixed with explicit prompt rules</li>
+          <li>Python 3.9 type hint crash → fixed with <code>typing.Dict/List</code> imports</li>
+          <li>Cold-start latency → fixed with background warmup thread at startup</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 15</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 16 — KEY LEARNINGS & FUTURE SCOPE
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s16">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Key Learnings &amp; Future Scope</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Key Learnings &amp; Future Scope</div>
+    <div class="two-col">
+      <div class="col">
+        <div class="card">
+          <div class="card-title">🧠 Key Learnings</div>
+          <ul>
+            <li><strong>Prompt engineering is critical</strong> — ARIA's behaviour quality depends entirely on how precisely the system prompt defines each rule</li>
+            <li><strong>Structural role boundaries</strong> beat text labels — using system/user/assistant roles instead of fake "ARIA:"/"Candidate:" labels eliminated hallucination</li>
+            <li><strong>Token budget management</strong> must be architectural, not just prompt-level — server-side sessions were the key architectural fix</li>
+            <li><strong>Dynamic output caps per phase</strong> are far more efficient than a fixed cap for all turns</li>
+            <li><strong>IBM Cloud Lite</strong> provides a complete free AI stack — watsonx.ai + IBM SDK together at zero cost</li>
+          </ul>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card cyan">
+          <div class="card-title">🚀 Future Scope</div>
+          <ul>
+            <li><strong>Resume Upload</strong> — parse CV and generate personalised questions from actual projects and skills listed</li>
+            <li><strong>Multilingual Support</strong> — conduct interviews in Hindi, Tamil, Telugu for regional candidates</li>
+            <li><strong>Redis Session Store</strong> — replace in-memory dict for multi-worker production deployment</li>
+            <li><strong>ARIA TTS (Text-to-Speech)</strong> — ARIA speaks the questions aloud for a true interview simulation</li>
+            <li><strong>Company-specific RAG</strong> — upload TCS/Infosys PDFs to knowledge base for hyper-accurate questions</li>
+            <li><strong>Analytics Dashboard</strong> — track score trends across multiple mock interview sessions over time</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 16</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 17 — CERTIFICATES
+════════════════════════════════════════════════════════ -->
+<div class="slide" id="s17">
+  <div class="ibm-header">
+    <div class="logo">IBM</div>
+    <div class="prog">Certificates Earned</div>
+  </div>
+  <div class="slide-body">
+    <div class="slide-title">Certificates Earned</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;">
+      <div class="screenshot-placeholder" style="flex:1;">
+        <div class="ph-icon">🏅</div>
+        <div class="ph-title">IBM SkillsBuild / Credly Certificate</div>
+        <div class="ph-hint">[ Add your Credly badge / IBM SkillsBuild completion certificate screenshot here ]</div>
+      </div>
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">🤖</div>
+        <div class="ph-title">IBM Bob Certificate</div>
+        <div class="ph-hint">[ Add your IBM Bob AI completion certificate here ]</div>
+      </div>
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">📜</div>
+        <div class="ph-title">Additional Certificate 1</div>
+        <div class="ph-hint">[ Add any additional IBM / AICTE certificate here ]</div>
+      </div>
+      <div class="screenshot-placeholder">
+        <div class="ph-icon">📜</div>
+        <div class="ph-title">Additional Certificate 2</div>
+        <div class="ph-hint">[ Add any additional certificate here ]</div>
+      </div>
+    </div>
+  </div>
+  <div class="ibm-footer">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>IBM SkillsBuild × AICTE 2026</span>
+    <span>Slide 17</span>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 18 — THANK YOU
+════════════════════════════════════════════════════════ -->
+<div class="slide cover-slide" id="s18">
+  <div class="ibm-header" style="background:rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.12);">
+    <div class="logo">IBM</div>
+    <div class="prog">IBM SkillsBuild × AICTE 2026</div>
+  </div>
+  <div class="slide-body" style="align-items:center;justify-content:center;text-align:center;">
+    <div style="font-size:48px;margin-bottom:12px;">🎯</div>
+    <div class="cover-title" style="font-size:36px;">Thank You!</div>
+    <div style="font-size:16px;color:rgba(255,255,255,0.7);margin:12px 0;">ARIA — AI Readiness Interview Agent</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px;">IBM SkillsBuild AICTE Internship 2026 · Problem Statement #22</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;">
+      <span class="tag tag-cyan">Meta Llama 3.3 70B</span>
+      <span class="tag tag-blue">IBM watsonx.ai</span>
+      <span class="tag tag-purple">FastAPI</span>
+      <span class="tag tag-green">Streamlit</span>
+      <span class="tag tag-yellow">Voice Input</span>
+      <span class="tag tag-blue">IBM Bob</span>
+    </div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.45);">
+      Student: B10_15 Nayak &nbsp;|&nbsp; Edunet Foundation — IBM University Engagement
+    </div>
+    <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,0.35);font-style:italic;">
+      GitHub: <em>[ Add your GitHub URL here ]</em>
+    </div>
+  </div>
+  <div class="ibm-footer" style="background:rgba(0,0,0,0.3);">
+    <span>ARIA — AI Readiness Interview Agent</span>
+    <span>Built with IBM Bob AI · IBM watsonx.ai · Meta Llama 3.3 70B</span>
+    <span>Slide 18</span>
+  </div>
+</div>
+
+</div><!-- /slide-deck -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+     NAVIGATION BAR
+════════════════════════════════════════════════════════ -->
+<div class="nav-bar">
+  <button class="nav-btn" onclick="navigate(-1)">◀ Prev</button>
+  <span class="slide-counter" id="counter">1 / 18</span>
+  <button class="nav-btn" onclick="navigate(1)">Next ▶</button>
+  <button class="print-btn" onclick="window.print()">🖨️ Print / PDF</button>
+</div>
+
+
+<script>
+const TOTAL = 18;
+let current = 1;
+
+function navigate(dir) {
+  const prev = document.getElementById('s' + current);
+  current = Math.max(1, Math.min(TOTAL, current + dir));
+  const next = document.getElementById('s' + current);
+  if (prev) prev.classList.remove('active');
+  if (next) next.classList.add('active');
+  document.getElementById('counter').textContent = current + ' / ' + TOTAL;
+  window.scrollTo(0, 0);
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+});
+</script>
+
+</body>
+</html>
