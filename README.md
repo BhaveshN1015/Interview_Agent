@@ -52,7 +52,7 @@ Now with **Resume-Aware Interviews** — upload your PDF/DOCX resume once and AR
 
 ## 🎥 Demo Video
 
-[![Watch Demo](https://img.youtube.com/vi/https://youtu.be/L8V0VZBCdbI/maxresdefault.jpg)](https://www.youtube.com/watch?v=https://youtu.be/L8V0VZBCdbI)
+[![Watch Demo](https://img.youtube.com/vi/L8V0VZBCdbI/maxresdefault.jpg)](https://www.youtube.com/watch?v=L8V0VZBCdbI)
 
 </div>
 
