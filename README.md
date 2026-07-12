@@ -50,13 +50,9 @@ Now with **Resume-Aware Interviews** — upload your PDF/DOCX resume once and AR
 
 <div align="center">
 
-### ✅ Good Interview — High-Scoring Answers
+## 🎥 Demo Video
 
-![Good Interview Demo](good_interview.gif)
-
-### ❌ Bad Interview — How ARIA Gives Feedback on Weak Answers
-
-![Bad Interview Demo](bad_interview.gif)
+[![Watch Demo](https://img.youtube.com/vi/https://youtu.be/L8V0VZBCdbI/maxresdefault.jpg)](https://www.youtube.com/watch?v=https://youtu.be/L8V0VZBCdbI)
 
 </div>
 
