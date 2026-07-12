@@ -17,3 +17,7 @@ requests==2.32.3
 
 # Environment variable loading
 python-dotenv==1.0.1
+
+# Resume parsing — PDF and DOCX support
+pymupdf==1.24.9
+python-docx==1.1.2

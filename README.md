@@ -32,6 +32,7 @@
 - [Deployment](#-deployment)
 - [Project Structure](#-project-structure)
 - [Token Optimisation](#-token-optimisation)
+- [Resume Feature](#-resume-feature)
 
 ---
 
@@ -40,6 +41,8 @@
 **ARIA (AI Readiness Interview Agent)** is an intelligent conversational agent that conducts full end-to-end mock interviews for job seekers targeting top IT companies like **TCS, Infosys, Wipro, Accenture, and Cognizant**.
 
 Unlike generic Q&A tools, ARIA runs a **complete structured interview** across three rounds, scores every answer in real-time, adapts difficulty as you progress, and hands you a personalised **Final Report Card** with a 7-day study roadmap — all powered by **Meta Llama 3.3 70B Instruct** via **IBM watsonx.ai**.
+
+Now with **Resume-Aware Interviews** — upload your PDF/DOCX resume once and ARIA will ask questions directly tied to your real projects, skills, and achievements.
 
 ---
 
@@ -64,11 +67,12 @@ Unlike generic Q&A tools, ARIA runs a **complete structured interview** across t
 | Feature | Description |
 |---|---|
 | 🎯 **Role-Based Questions** | Tailored questions for any IT role and target company |
+| 📄 **Resume-Aware Interviews** | Upload your PDF/DOCX/TXT resume — ARIA asks about your real projects, skills & achievements |
 | 📊 **Real-Time Evaluation** | Score (X/10) + concise feedback after every answer |
 | 💡 **Confidence Tracking** | Measures confidence growth from start to finish |
 | 🔄 **Adaptive Difficulty** | Questions get progressively harder as you perform better |
 | 🎙️ **Voice Input** | Speak your answers using your microphone (Chrome/Edge) |
-| 📋 **Final Report Card** | Overall scores, top strengths, improvement areas |
+| 📋 **Final Report Card** | Overall scores, top strengths, improvement areas + Resume Alignment score |
 | 🗺️ **7-Day Study Roadmap** | Personalised preparation plan based on your performance |
 | 💬 **Multi-Turn Chat** | Natural conversational interview flow — no forms or dropdowns |
 | 🏢 **Multi-Company Support** | TCS, Infosys, Wipro, Accenture, Cognizant and more |
@@ -89,17 +93,22 @@ Unlike generic Q&A tools, ARIA runs a **complete structured interview** across t
 │                                                          │
 │  • Chat UI — displays messages                           │
 │  • Voice widget — Web Speech API (browser-native STT)    │
+│  • Resume uploader — PDF / DOCX / TXT (optional)         │
 │  • Sends only: { session_id, message }                   │
 │    ↳ NO conversation history in the HTTP body            │
 └─────────────────────────┬────────────────────────────────┘
-                          │  POST /chat  { session_id, message }
+                          │  POST /chat        { session_id, message }
                           │  POST /session/new
+                          │  POST /resume/upload { session_id, file }
 ┌─────────────────────────▼────────────────────────────────┐
 │           FastAPI Backend  (main.py · :8000)             │
 │                                                          │
 │  • Server-side session store  (_SESSIONS dict)           │
+│    ↳ { history: [...], resume_digest: str | None }       │
+│  • Resume parser — PyMuPDF (PDF) + python-docx (DOCX)    │
+│  • One-shot digest call → compact ~120-word summary      │
 │  • History trimming + dynamic token budget               │
-│  • ARIA system prompt engine                             │
+│  • ARIA system prompt engine (digest injected when set)  │
 │  • Background model warmup at startup                    │
 └─────────────────────────┬────────────────────────────────┘
                           │  ibm-watsonx-ai SDK
@@ -112,6 +121,8 @@ Unlike generic Q&A tools, ARIA runs a **complete structured interview** across t
 
 **Key design decision — server-side sessions:** The frontend never sends conversation history. Only `session_id + message` travels over HTTP. The backend holds all history, trims it to a rolling window, and sends a fixed-size context to the LLM — keeping input token cost flat at every turn of the interview.
 
+**Resume design decision — one-shot digest:** The raw resume is never stored or re-sent. One LLM call converts it to a ~120-word structured digest on upload. That digest (~130 tokens) is injected into the system prompt on every subsequent call — keeping the per-call overhead flat and the raw file off the wire entirely.
+
 ---
 
 ## 🛠️ Tech Stack
@@ -123,6 +134,7 @@ Unlike generic Q&A tools, ARIA runs a **complete structured interview** across t
 | **Backend** | FastAPI + Uvicorn | REST API, session management, prompt engineering |
 | **Frontend** | Streamlit | Chat UI, sidebar controls, real-time display |
 | **Voice Input** | Browser Web Speech API | Microphone-to-text (zero external dependencies) |
+| **Resume Parsing** | PyMuPDF + python-docx | Extract text from PDF and DOCX resumes |
 | **SDK** | ibm-watsonx-ai | Official Python SDK for watsonx.ai model calls |
 | **Language** | Python 3.10+ | Core language |
 | **HTTP Client** | requests | Frontend → Backend API calls |
@@ -165,6 +177,9 @@ source ml/bin/activate     # Mac/Linux
 
 # 3. Install dependencies
 pip install -r requirements.txt
+
+# If upgrading an existing install, add the two new resume packages:
+pip install pymupdf==1.24.9 python-docx==1.1.2
 
 # 4. Create .env from template
 copy .env.example .env     # Windows
@@ -236,10 +251,10 @@ API_URL = "https://aria-api-xxxx.onrender.com"
 ```
 interview-trainer/
 │
-├── main.py                  # FastAPI backend — ARIA agent, session store, LLM calls
-├── app.py                   # Streamlit frontend — chat UI + voice input widget
+├── main.py                  # FastAPI backend — ARIA agent, session store, resume upload, LLM calls
+├── app.py                   # Streamlit frontend — chat UI, voice input, resume uploader
 ├── watsonx_client.py        # Standalone IBM watsonx.ai smoke-test helper
-├── prompt_templates.py      # Reusable prompt builders (resume, difficulty rating, etc.)
+├── prompt_templates.py      # Prompt builders — resume digest, interview questions, difficulty
 ├── sample_prompts.py        # Pre-written test conversations for 5 companies/roles
 │
 ├── good_interview.gif       # Demo — high-scoring interview run
@@ -249,7 +264,7 @@ interview-trainer/
 ├── Procfile                 # Process file for Render / Railway / Heroku
 ├── .env.example             # Credentials template — safe to commit
 ├── .env                     # Your live credentials — NEVER commit this
-├── .gitignore               # Excludes .env, ml/, videos, logs
+├── .gitignore               # Excludes .env, ml/, videos, logs, uploaded resumes
 └── README.md                # This file
 ```
 
@@ -270,6 +285,30 @@ ARIA was heavily optimised to stay within IBM watsonx.ai's free Lite tier limits
 | Sessions / month (free tier) | ~2–3 | ~7–8 |
 
 Key changes: server-side session store, compressed system prompt, word-count truncation, dynamic output caps per interview phase, background model warmup at startup.
+
+---
+
+## 📄 Resume Feature
+
+ARIA supports optional resume upload to personalise the interview with questions drawn from your actual experience.
+
+| Step | What happens | Token cost |
+|---|---|---|
+| Upload PDF/DOCX/TXT | Text extracted server-side (PyMuPDF / python-docx) | 0 |
+| Digest generation | ONE LLM call → ~120-word structured summary | ~650 input + ~150 output (once) |
+| Per interview call | Digest injected into system prompt | +~130 tokens/call |
+| Full session w/ resume | ~10,200 tokens total | ~4–5 sessions/month |
+
+**How it works:**
+1. Click **🚀 Start New Interview** — creates your session
+2. Upload your resume in the **📄 Resume Upload** sidebar section
+3. ARIA reads your Role, Experience, Skills, Projects, and Achievements from the digest
+4. Questions are drawn from both general interview knowledge AND your specific resume
+5. Final Report Card includes a **Resume Alignment** score — how well your answers matched your CV claims
+
+**Supported formats:** PDF · DOCX · TXT (max ~5 pages recommended)
+
+**Resume is never stored** — raw text is discarded after the digest is generated. Only the ~120-word summary is kept in memory for the session duration.
 
 ---
 

@@ -1,11 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, List
 from ibm_watsonx_ai import Credentials
 from ibm_watsonx_ai.foundation_models import ModelInference
 from dotenv import load_dotenv
+from prompt_templates import get_resume_digest_prompt
 import os
+import io
 import time
 import uuid
 import threading
@@ -15,7 +17,7 @@ load_dotenv()
 app = FastAPI(
     title="ARIA - AI Readiness Interview Agent",
     description="Powered by Meta Llama 3.3 70B via IBM watsonx.ai",
-    version="4.0.0"
+    version="5.0.0"
 )
 
 app.add_middleware(
@@ -30,9 +32,11 @@ ARIA_SYSTEM_PROMPT = """You are ARIA, an AI interview coach for IT roles.
 
 FLOW:
 1) First turn: ask Name, Role, Experience, Skills, Target Company in ONE question. No Score line.
+   If a Resume Digest is provided below, you already know their skills/role — greet them, confirm the details, and ask only for their Target Company and Name.
 2) After they answer profile: ask ONLY "Confidence 1-10?" — nothing else. No Score line. This is onboarding, not an interview question.
 3) After they give a number (their confidence): do NOT score it. Begin the interview immediately with Technical Q1.
 4) Run 5 Technical + 3 HR(STAR) + 2 Situational questions, ONE at a time, increasing difficulty.
+   When a Resume Digest is present, weave resume-specific questions naturally into the mix — ask about their actual projects, skills, and achievements listed there.
 5) After EACH interview-question answer, reply in THIS EXACT FORMAT (blank line before Next Question):
 Score: X/10
 [1 line ONLY: strength | gap | ideal answer — max 20 words total]
@@ -40,6 +44,7 @@ Score: X/10
 Next Question: [single question]
 6) After Q10, output the FINAL REPORT CARD:
 Name/Role/Company | Scores: Technical/Comm/Confidence/ProblemSolving/Overall (X/10) | Start→End Confidence | Top 3 Strengths | Top 3 Improvement Areas | 7-Day Roadmap | 1-line motivation.
+If a Resume Digest was present, add: Resume Alignment — how well answers matched the resume claims.
 
 STRICT RULES:
 - Never write the candidate's turn or invent their answer.
@@ -82,12 +87,46 @@ def _warmup_model():
         pass   # credentials not set yet / network unavailable — safe to ignore
 
 
+# ---------- Resume Text Extraction ----------
+def _extract_text_from_pdf(data: bytes) -> str:
+    """Extract plain text from a PDF file using PyMuPDF."""
+    import fitz  # PyMuPDF
+    text_parts = []
+    with fitz.open(stream=data, filetype="pdf") as doc:
+        for page in doc:
+            text_parts.append(page.get_text())
+    return "\n".join(text_parts).strip()
+
+
+def _extract_text_from_docx(data: bytes) -> str:
+    """Extract plain text from a DOCX file using python-docx."""
+    from docx import Document
+    doc = Document(io.BytesIO(data))
+    return "\n".join(p.text for p in doc.paragraphs if p.text.strip()).strip()
+
+
+def extract_resume_text(filename: str, data: bytes) -> str:
+    """Route to the correct extractor based on file extension."""
+    ext = filename.rsplit(".", 1)[-1].lower()
+    if ext == "pdf":
+        return _extract_text_from_pdf(data)
+    elif ext in ("docx", "doc"):
+        return _extract_text_from_docx(data)
+    elif ext == "txt":
+        return data.decode("utf-8", errors="ignore").strip()
+    else:
+        raise ValueError(f"Unsupported file type: .{ext}")
+
+
 # ---------- Server-side Session Store ----------
 # history is stored on the server, NOT sent by the client on every request.
 # The client sends only { "session_id": "...", "message": "..." }.
 # Using a plain dict — fine for single-process uvicorn (dev + demo).
 # For multi-worker production, swap with Redis or another shared store.
-_SESSIONS: Dict[str, List] = {}   # Dict/List from typing — works on Python 3.9+
+#
+# Each session value is a dict:
+#   { "history": [...], "resume_digest": str | None }
+_SESSIONS: Dict[str, dict] = {}
 
 MAX_HISTORY_TURNS = 2      # 2 recent user+assistant pairs kept (beyond pinned intro)
 MAX_WORDS_PER_MSG = 45     # ~55–65 tokens per message — tighter now that we control history
@@ -101,12 +140,12 @@ def _truncate(text: str) -> str:
     return " ".join(words[:MAX_WORDS_PER_MSG]) + "..."
 
 
-def build_messages(history: list, user_message: str) -> list:
+def build_messages(history: list, user_message: str, resume_digest: Optional[str] = None) -> list:
     """
     Build the LLM message list from server-side history.
 
     Strategy:
-    - Always include system prompt.
+    - Always include system prompt (+ optional resume digest block).
     - Pin the FIRST assistant message (the profile question ARIA asked) — cheap
       anchor that tells the model who it is and what stage it was at.
     - Keep the last MAX_HISTORY_TURNS user+assistant pairs — just enough for
@@ -115,13 +154,23 @@ def build_messages(history: list, user_message: str) -> list:
     - Append the current user message untruncated (it's always short).
 
     Token budget per call (approximate):
-      system     ~200 tok  (constant)
-      pinned     ~15 tok   (ARIA's short profile question)
-      2 pairs    ~4 msgs × ~60 tok = ~240 tok
-      user msg   ~50 tok
-      ──────────────────────────────
-      input      ~505 tok  (down from ~760 before, ~1400 original)
+      system          ~210 tok  (constant — slightly larger with resume flow note)
+      resume digest   ~130 tok  (when present — injected ONCE into system prompt)
+      pinned          ~15 tok
+      2 pairs         ~4 msgs × ~60 tok = ~240 tok
+      user msg        ~50 tok
+      ────────────────────────────────────────
+      input w/resume  ~645 tok  (vs ~505 without resume)
     """
+    # Build system prompt — append digest block if available
+    if resume_digest:
+        system_content = (
+            ARIA_SYSTEM_PROMPT
+            + f"\n\n--- Candidate Resume Digest ---\n{resume_digest}\n--- End Resume Digest ---"
+        )
+    else:
+        system_content = ARIA_SYSTEM_PROMPT
+
     pinned = []
     rest = []
     pinned_used = False
@@ -135,7 +184,7 @@ def build_messages(history: list, user_message: str) -> list:
     max_msgs = MAX_HISTORY_TURNS * 2
     trimmed = rest[-max_msgs:] if len(rest) > max_msgs else rest
 
-    messages = [{"role": "system", "content": ARIA_SYSTEM_PROMPT}]
+    messages = [{"role": "system", "content": system_content}]
     for msg in pinned + trimmed:
         role = "user" if msg["role"] == "user" else "assistant"
         messages.append({"role": role, "content": _truncate(msg["content"])})
@@ -199,6 +248,12 @@ class ChatResponse(BaseModel):
     reply: str
     session_id: str
 
+class ResumeUploadResponse(BaseModel):
+    status: str
+    session_id: str
+    digest: str          # the compressed digest (useful for debugging / display)
+    word_count: int      # how many words the digest is
+
 
 # ---------- Startup event — warm up model in background ----------
 @app.on_event("startup")
@@ -217,7 +272,7 @@ def root():
     return {
         "message": "ARIA is running!",
         "powered_by": "Meta Llama 3.3 70B via IBM watsonx.ai",
-        "version": "4.0.0"
+        "version": "5.0.0"
     }
 
 @app.get("/health")
@@ -229,8 +284,64 @@ def health():
 def new_session():
     """Create a fresh interview session. Returns a session_id the frontend stores."""
     sid = str(uuid.uuid4())
-    _SESSIONS[sid] = []   # empty history
+    _SESSIONS[sid] = {"history": [], "resume_digest": None}
     return {"session_id": sid}
+
+
+@app.post("/resume/upload", response_model=ResumeUploadResponse)
+async def upload_resume(
+    session_id: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """
+    Accept a PDF / DOCX / TXT resume, extract its text, run ONE LLM call to
+    produce a compact digest (~120 words), and store it in the session.
+
+    Token cost: ~650 input + ~150 output — one-time per session.
+    Every subsequent /chat call injects the digest (~130 tokens) instead of
+    the raw text, keeping per-call cost flat.
+    """
+    if session_id not in _SESSIONS:
+        raise HTTPException(status_code=404, detail="Session not found. Call /session/new first.")
+
+    # --- 1. Read & extract text ---
+    data = await file.read()
+    try:
+        raw_text = extract_resume_text(file.filename, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not parse resume: {str(e)}")
+
+    if not raw_text.strip():
+        raise HTTPException(status_code=400, detail="Resume appears to be empty or unreadable.")
+
+    # --- 2. One LLM call → digest ---
+    digest_prompt = get_resume_digest_prompt(raw_text)
+    digest_messages = [
+        {"role": "system", "content": "You are a resume summarizer. Follow the format exactly."},
+        {"role": "user",   "content": digest_prompt}
+    ]
+
+    try:
+        model = get_model()
+        result = model.chat(
+            messages=digest_messages,
+            params={"temperature": 0.1, "max_tokens": 220, "top_p": 0.9}
+        )
+        digest = result["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LLM digest failed: {str(e)}")
+
+    # --- 3. Store digest in session ---
+    _SESSIONS[session_id]["resume_digest"] = digest
+
+    return {
+        "status": "success",
+        "session_id": session_id,
+        "digest": digest,
+        "word_count": len(digest.split())
+    }
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -239,8 +350,10 @@ def chat(request: ChatRequest):
     if sid not in _SESSIONS:
         raise HTTPException(status_code=404, detail="Session not found. Call /session/new first.")
 
-    history = _SESSIONS[sid]
-    messages = build_messages(history, request.message)
+    session   = _SESSIONS[sid]
+    history   = session["history"]
+    digest    = session["resume_digest"]   # None if no resume uploaded
+    messages  = build_messages(history, request.message, resume_digest=digest)
 
     # Dynamic output cap:
     #   onboarding turns (history < 4 msgs) → short question only → 50 tokens
@@ -271,8 +384,8 @@ def chat(request: ChatRequest):
             clean_reply = sanitize_reply(raw_reply.strip())
 
             # Append both turns to server-side history
-            _SESSIONS[sid].append({"role": "user",      "content": request.message})
-            _SESSIONS[sid].append({"role": "assistant", "content": clean_reply})
+            _SESSIONS[sid]["history"].append({"role": "user",      "content": request.message})
+            _SESSIONS[sid]["history"].append({"role": "assistant", "content": clean_reply})
 
             return {"status": "success", "reply": clean_reply, "session_id": sid}
 

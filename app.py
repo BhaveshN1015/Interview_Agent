@@ -61,6 +61,12 @@ if "voice_transcript" not in st.session_state:
 # input_mode: "text" or "voice"
 if "input_mode" not in st.session_state:
     st.session_state.input_mode = "text"
+# resume_loaded: True once /resume/upload succeeds for current session
+if "resume_loaded" not in st.session_state:
+    st.session_state.resume_loaded = False
+# resume_digest: the compact digest returned by the backend (for display only)
+if "resume_digest" not in st.session_state:
+    st.session_state.resume_digest = ""
 
 # ---------- Pick up voice transcript from query params (set by JS component) ----------
 # The voice widget writes ?voice_input=<transcript> into the URL, then
@@ -83,6 +89,8 @@ with st.sidebar:
         st.session_state.started = True
         st.session_state.session_id = None
         st.session_state.voice_transcript = ""
+        st.session_state.resume_loaded = False
+        st.session_state.resume_digest = ""
 
         with st.spinner("Starting ARIA..."):
             try:
@@ -122,7 +130,52 @@ with st.sidebar:
             st.session_state.started = False
             st.session_state.session_id = None
             st.session_state.voice_transcript = ""
+            st.session_state.resume_loaded = False
+            st.session_state.resume_digest = ""
             st.rerun()
+
+    # ---------- Resume Upload ----------
+    st.divider()
+    st.markdown("### 📄 Resume Upload *(optional)*")
+
+    if not st.session_state.started:
+        st.markdown(
+            "<p style='font-size:11px;color:#888'>Start an interview first, then upload your resume.</p>",
+            unsafe_allow_html=True
+        )
+    elif st.session_state.resume_loaded:
+        st.success("✅ Resume loaded — ARIA will use it!")
+        with st.expander("View Resume Digest", expanded=False):
+            st.markdown(
+                f"<pre style='font-size:11px;white-space:pre-wrap;color:#ccc'>"
+                f"{st.session_state.resume_digest}</pre>",
+                unsafe_allow_html=True
+            )
+    else:
+        uploaded_file = st.file_uploader(
+            "Upload your resume",
+            type=["pdf", "docx", "txt"],
+            help="PDF, DOCX, or TXT — max ~5 pages. Used once to personalise your interview.",
+            label_visibility="collapsed"
+        )
+        if uploaded_file is not None:
+            with st.spinner("Reading resume & generating digest..."):
+                try:
+                    resp = requests.post(
+                        f"{API_URL}/resume/upload",
+                        data={"session_id": st.session_state.session_id},
+                        files={"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        st.session_state.resume_loaded = True
+                        st.session_state.resume_digest = data["digest"]
+                        st.success(f"✅ Resume processed! ({data['word_count']} word digest)")
+                        st.rerun()
+                    else:
+                        st.error(f"Upload failed: {resp.json().get('detail', resp.text)}")
+                except Exception as e:
+                    st.error(f"Cannot connect to backend: {str(e)}")
 
     st.divider()
 
@@ -149,12 +202,13 @@ Click the mic button, speak clearly, then submit.
     st.markdown("### 📋 How ARIA Works")
     st.markdown("""
 1. Click **Start New Interview**
-2. Tell ARIA your name, role & skills
-3. Rate your confidence (1-10)
-4. **Technical Round** — 5 questions
-5. **HR Round** — 3 questions
-6. **Situational Round** — 2 questions
-7. Get your **Final Report Card** 🎯
+2. *(Optional)* Upload your resume
+3. Tell ARIA your name, role & skills
+4. Rate your confidence (1-10)
+5. **Technical Round** — 5 questions
+6. **HR Round** — 3 questions
+7. **Situational Round** — 2 questions
+8. Get your **Final Report Card** 🎯
     """)
     st.divider()
     st.markdown("""

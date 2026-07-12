@@ -5,6 +5,32 @@
 # every instruction the model needs.
 
 
+def get_resume_digest_prompt(resume_text: str) -> str:
+    """
+    One-shot call that turns a raw resume into a compact ~120-word digest.
+    The digest is stored in the session and injected into every subsequent
+    LLM call instead of the raw resume — keeps per-call token cost flat.
+
+    Input cap: 500 words of resume text (~650 tokens).
+    Expected output: ~120 words (~150 tokens) — one-time cost only.
+    """
+    words = resume_text.split()
+    if len(words) > 500:
+        resume_text = " ".join(words[:500]) + "..."
+
+    return (
+        "Summarize this resume into EXACTLY this format (be concise, max 120 words total):\n\n"
+        "Role: <job title>\n"
+        "Experience: <X years / fresher>\n"
+        "Skills: <comma-separated top skills, max 10>\n"
+        "Projects: <3 projects, 1 line each — name: what it did>\n"
+        "Achievements: <3 achievements, 1 line each>\n"
+        "Interview Topics: <5 specific topics an interviewer would probe from this resume>\n\n"
+        f"Resume:\n{resume_text}\n\n"
+        "Output only the structured digest above. No intro, no commentary."
+    )
+
+
 def get_interview_questions_prompt(job_role: str, experience: str, skills: str) -> str:
     return (
         f"You are an expert interview coach for top IT companies (TCS, Infosys, Wipro, Accenture).\n\n"

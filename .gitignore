@@ -58,3 +58,8 @@ logs_images/
 # Misc
 *.zip
 *.tar.gz
+
+# Uploaded resumes — never commit user files
+*.pdf
+*.docx
+*.doc
